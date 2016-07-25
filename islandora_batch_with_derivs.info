@@ -1,0 +1,9 @@
+name = Islandora Batch With Derivatives
+description = "A batch importer module for objects that have all of their derivatives pregenerated."
+package = Islandora
+dependencies[] = islandora
+dependencies[] = islandora_batch
+version = 7.x-dev
+core = 7.x
+files[] = includes/preprocessor.inc
+files[] = includes/object.inc
