@@ -40,6 +40,10 @@ function islandora_batch_with_derivs_drush_command() {
         'description' => 'The predicate of the relationship to the parent. Defaults to "isMemberOf".',
         'value' => 'optional',
       ),
+      'content_models' => array(
+        'description' => 'The content model to use for objects that do not have an OBJ derivative file.',
+        'value' => 'optional',
+      ),
     ),
     'bootstrap' => DRUSH_BOOTSTRAP_DRUPAL_LOGIN,
   );
@@ -61,6 +65,7 @@ function drush_islandora_batch_with_derivs_preprocess() {
     'namespace' => drush_get_option('namespace'),
     'scan_target' => drush_get_option('scan_target'),
     'key_datastream' => drush_get_option('key_datastream'),
+    'content_models' => drush_get_option('content_models'),
     'parent' => drush_get_option('parent'),
     'parent_relationship_uri' => drush_get_option('parent_relationship_uri', 'info:fedora/fedora-system:def/relations-external#'),
     'parent_relationship_pred' => drush_get_option('parent_relationship_pred', 'isMemberOf'),

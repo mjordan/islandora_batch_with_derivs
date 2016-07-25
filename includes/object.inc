@@ -53,10 +53,6 @@ class IslandoraBatchWithDerivsObject extends IslandoraBatchObject {
 
   /**
    * Add relationships.
-   *
-   * QUESTION: OBJ is optional, where do we get the cmodel in this case?
-   * Provide a drush option? This option would be useful for content models
-   * that don't have OBJ datastreams, like collections and compound objects.
    */
   public function addRelationships() {
     $this->relationships->add(FEDORA_RELS_EXT_URI, 'isMemberOfCollection', $this->preprocessorParameters['parent']);
@@ -64,9 +60,19 @@ class IslandoraBatchWithDerivsObject extends IslandoraBatchObject {
     module_load_include('inc', 'islandora_batch_with_derivs', 'includes/utilities');
     $obj_path_pattern = $this->objectContentPath . DIRECTORY_SEPARATOR . 'OBJ';
     $obj_files = glob($obj_path_pattern . '*');
-    // There should be only one OBJ file.
-    $ext = pathinfo($obj_files[0], PATHINFO_EXTENSION);
-    $this->models = islandora_batch_with_derivs_get_cmodel($ext);
+    // There should be only one OBJ file, or none (since the OBJ datastream
+    // is optional).
+    if (count($obj_files)) {
+      $ext = pathinfo($obj_files[0], PATHINFO_EXTENSION);
+      $this->models = islandora_batch_with_derivs_get_cmodel($ext);
+    }
+    else {
+      // If there is no OBJ to get the content model from, use the value
+      // of the --content_models option. @todo: account for when this
+      // option is missing.
+      $content_model = $this->preprocessorParameters['content_models'];
+      $this->models = islandora_batch_with_derivs_get_cmodel($content_model);
+    }
   }
 
   /**
