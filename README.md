@@ -1,6 +1,6 @@
 # Islandora Batch with Derivatives
 
-Islandora batch module for ingesting objects that have pregenerated derivatives. The typical use case is that you have created derivatives outside of Islandora to reduce the amount of time it takes to ingest a large batch. We need to use a specialized batch ingest module for this because the standard Islandora Batch only allows for two files per object, one .xml file for the MODS or DC and one other file for the OBJ. This batch module allows you to group all of the files corresonding to an object's datastreams (with the exception of RELS-EXT) into a subdirectory, as illustrated below.
+Islandora batch module for ingesting objects that have pregenerated derivatives (or, in other words, pregenerated datastreams). The typical use case is that you have created derivatives outside of Islandora to reduce the amount of time it takes to ingest a large batch. We need to use a specialized batch ingest module for this because the standard Islandora Batch only allows for two files per object, one .xml file for the MODS or DC and one other file for the OBJ. This batch module allows you to group all of the files corresonding to an object's datastreams (with the exception of RELS-EXT) into a subdirectory, as illustrated below.
 
 The [Islandora Book Batch](https://github.com/Islandora/islandora_book_batch) and [Islandora Newspaper Batch](https://github.com/Islandora/islandora_newspaper_batch) modules allow you to add derivative files to page-level directories, speeding up ingestion of those content types hugely. This module takes the same approach, but for other content models.
 
@@ -28,10 +28,12 @@ When using this batch module, you usually want to turn Islandora's derivative cr
 This batch module uses filenames to identify the files that are intended for specific datastreams. All of the files you are ingesting with an object should go in one directory (a subdirectory of the path you identify in the drush command with the `--scan_target` option). Each object-level subdirectory must have at least a file for the "key datastream", which is either the MODS (MODS.xml) or DC (DC.xml) datastream. This datastream is identified in the `--key_datastream` option. All other datastream files are optional.
 
 Some points to note:
+
+* The objects created by this batch module get PIDs that are local to the destination Islandora.
+* Related to the previous point, you would not typically pregenerate the RELS-EXT datastream, since it contains data expressing the relationships between the object and other objects. It is created automatically on ingest regardless of whether "Defer derivative generation during ingest" is enabled.
 * The label applied to each object is derived from the MODS `<title>` element, or if there is no MODS.xml file in the object directory, from the DC `<title>` element.
 * By default, the content model of each object is derived from the extension of the file named 'OBJ'. If any of the objects you are ingesting do not have an OBJ datastream file, you will need to specify a content model for them with the `--content_models` option.
 * Even though all datastream files other than either MODS.xml or DC.xml are optional, if you enable "Defer derivative generation during ingest", Islandora will not create the missing derivatives. For every derivative file that you do not include, you will need to generate the corresponding derivatives later.
-
 
 ### Example input directories
 
@@ -62,7 +64,7 @@ Each object in the batch must be in its own subdirectory under the path specifie
     └── TN.jpg
 ```
 
-The names of the object subdirectories carry no meaning. We do not include the RELS-EXT datastream since it is created automatically.
+The names of the object subdirectories have no significance.
 
 ## Maintainer
 
