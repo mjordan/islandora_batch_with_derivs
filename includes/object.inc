@@ -35,6 +35,16 @@ class IslandoraBatchWithDerivsObject extends IslandoraBatchObject {
       }
     }
 
+    module_load_include('inc', 'islandora_batch_with_derivs', 'includes/utilities');
+    if ($this->preprocessorParameters['key_datastream'] == 'MODS') {
+      $mods_content = file_get_contents($this->keyDsFilePath);
+      $this->label = islandora_batch_with_derivs_get_label_from_mods($mods_content);
+    }
+    if ($this->preprocessorParameters['key_datastream'] == 'DC') {
+      $dc_content = file_get_contents($this->keyDsFilePath);
+      $this->label = islandora_batch_with_derivs_get_label_from_dc($dc_content);
+    }
+
     $this->addRelationships();
 
     // Indicate that this object is ready to be ingested.
@@ -44,9 +54,9 @@ class IslandoraBatchWithDerivsObject extends IslandoraBatchObject {
   /**
    * Add relationships.
    *
-   * QUESTION: OBJ is optional, where do we get the cmodel in this case? Provide a drush option?
-   * This option would be useful for content models that don't have OBJ datastreams, like collections
-   * and compound objects.
+   * QUESTION: OBJ is optional, where do we get the cmodel in this case?
+   * Provide a drush option? This option would be useful for content models
+   * that don't have OBJ datastreams, like collections and compound objects.
    */
   public function addRelationships() {
     $this->relationships->add(FEDORA_RELS_EXT_URI, 'isMemberOfCollection', $this->preprocessorParameters['parent']);

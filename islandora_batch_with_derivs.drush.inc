@@ -59,7 +59,8 @@ function drush_islandora_batch_with_derivs_preprocess() {
   $connection = islandora_get_tuque_connection();
   $parameters = array(
     'namespace' => drush_get_option('namespace'),
-    'target' => drush_get_option('target'),
+    'scan_target' => drush_get_option('scan_target'),
+    'key_datastream' => drush_get_option('key_datastream'),
     'parent' => drush_get_option('parent'),
     'parent_relationship_uri' => drush_get_option('parent_relationship_uri', 'info:fedora/fedora-system:def/relations-external#'),
     'parent_relationship_pred' => drush_get_option('parent_relationship_pred', 'isMemberOf'),

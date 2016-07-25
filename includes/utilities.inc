@@ -43,3 +43,51 @@ function islandora_batch_with_derivs_get_cmodel($extension) {
   );
   return $map[$extension];
 }
+
+/**
+ * Gets the title element to use as the object label.
+ *
+ * @param string $mods_xml
+ *   The contents of the MODS.xml file.
+ *
+ * @return string
+ *   A label for the object.
+ */
+function islandora_batch_with_derivs_get_label_from_mods($mods_xml) {
+  $dom = new DOMDocument();
+  $dom->loadXML($mods_xml);
+  $xpath = new DOMXPath($dom);
+  $xpath->registerNamespace('mods', 'http://www.loc.gov/mods/v3');
+  $titles = $xpath->query('//mods:titleInfo/mods:title');
+  if ($titles->length > 0) {
+    $label = $titles->item(0)->nodeValue;
+  }
+  else {
+    $label = '[No object label available]';
+  }
+  return $label;
+}
+
+/**
+ * Gets the title element to use as the object label.
+ *
+ * @param string $dc_xml
+ *   The contents of the DC.xml file.
+ *
+ * @return string
+ *   A label for the object.
+ */
+function islandora_batch_with_derivs_get_label_from_dc($dc_xml) {
+  $dom = new DOMDocument();
+  $dom->loadXML($dc_xml);
+  $xpath = new DOMXPath($dom);
+  $xpath->registerNamespace('dc', 'http://purl.org/dc/elements/1.1/');
+  $titles = $xpath->query("//dc:title");
+  if ($titles->length > 0) {
+    $label = $titles->item(0)->nodeValue;
+  }
+  else {
+    $label = '[No object label available]';
+  }
+  return $label;
+}
