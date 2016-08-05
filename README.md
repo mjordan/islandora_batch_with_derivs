@@ -29,7 +29,7 @@ This batch module uses filenames to identify the files that are intended for spe
 
 Some points to note:
 
-* The objects created by this batch module get PIDs that are local to the destination Islandora.
+* The objects ingested by this batch module are assigned PIDs by the destination Islandora. PIDs in datastreams such as DC and RELS-EXT are not reused.
 * Related to the previous point, you would not typically pregenerate the RELS-EXT datastream, since it contains data expressing the relationships between the object and other objects. It is created automatically on ingest regardless of whether "Defer derivative generation during ingest" is enabled.
 * The label applied to each object is derived from the MODS `<title>` element, or if there is no MODS.xml file in the object directory, from the DC `<title>` element.
 * By default, the content model of each object is derived from the extension of the file named 'OBJ'. If any of the objects you are ingesting do not have an OBJ datastream file, you will need to specify a content model for them with the `--content_models` option.
