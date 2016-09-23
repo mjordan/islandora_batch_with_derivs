@@ -18,7 +18,7 @@ The [Islandora Book Batch](https://github.com/Islandora/islandora_book_batch) an
 
 Enable this module, then run its drush command to import objects:
 
-`drush --user=admin islandora_batch_with_derivs_preprocess --key_datastream=MODS --scan_target=/path/to/object/files --namespace=mynamespace --parent=islandora:mycollection`
+`drush --user=admin islandora_batch_with_derivs_preprocess --key_datastream=MODS --scan_target=/path/to/object/files --namespace=mynamespace --content_models=islandora:sp_large_image_cmodel --parent=islandora:mycollection`
 
 Then, to perform the ingest:
 
