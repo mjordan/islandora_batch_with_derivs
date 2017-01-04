@@ -14,7 +14,7 @@ function islandora_batch_with_derivs_drush_command() {
   $items['islandora_batch_with_derivs_preprocess'] = array(
     'aliases' => array('ibwd'),
     'description' => 'Preprocess Islandora objects with derivatives into batch queue entries.',
-    'drupal dependencies' => array('islandora_batch', 'islandora_solution_pack_xml'),
+    'drupal dependencies' => array('islandora_batch'),
     'options' => array(
       'scan_target' => array(
         'description' => 'The target directory to scan.',

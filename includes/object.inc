@@ -15,7 +15,7 @@ class IslandoraBatchWithDerivsObject extends IslandoraBatchObject {
   /**
    * Constructor.
    */
-  public function __construct(IslandoraTuque $connection, string $key_datastream_path, $batch_parameters) {
+  public function __construct(IslandoraTuque $connection, $key_datastream_path, $batch_parameters) {
     parent::__construct(NULL, $connection->repository);
 
     $this->keyDsFilePath = $key_datastream_path;
