@@ -91,3 +91,25 @@ function islandora_batch_with_derivs_get_label_from_dc($dc_xml) {
   }
   return $label;
 }
+
+/**
+ * Generates DC XML from MODS XML via XSLT.
+ *
+ * @param string $mods_xml
+ *   An XML string.
+ * @param string $path_to_xslt
+ *   Path to the XSLT stylesheet.
+ *
+ * @return string
+ *   The transformed DC XML.
+ */
+function islandora_batch_with_derivs_get_dc_from_mods($mods_xml, $path_to_xslt) {
+  $xsl_doc = new DOMDocument();
+  $xsl_doc->load($path_to_xslt);
+  $xml_doc = new DOMDocument();
+  $xml_doc->loadXML($mods_xml);
+  $xslt_proc = new XSLTProcessor();
+  $xslt_proc->importStylesheet($xsl_doc);
+  $dc_xml = $xslt_proc->transformToXML($xml_doc);
+  return $dc_xml;
+}

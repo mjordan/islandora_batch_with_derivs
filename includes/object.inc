@@ -21,6 +21,9 @@ class IslandoraBatchWithDerivsObject extends IslandoraBatchObject {
     $this->keyDsFilePath = $key_datastream_path;
     $this->objectContentPath = dirname($key_datastream_path);
     $this->preprocessorParameters = $batch_parameters;
+    if ($this->preprocessorParameters['create_dc_from_mods']) {
+      $this->modsToDcTransform = drupal_get_path('module', 'islandora_batch') . '/transforms/mods_to_dc.xsl';
+    }
   }
 
   /**
@@ -39,6 +42,18 @@ class IslandoraBatchWithDerivsObject extends IslandoraBatchObject {
     if ($this->preprocessorParameters['key_datastream'] == 'MODS') {
       $mods_content = file_get_contents($this->keyDsFilePath);
       $this->label = islandora_batch_with_derivs_get_label_from_mods($mods_content);
+
+      // Most datastreams in the new object correspond 1:1 to the files in the input directory; DC is
+      // an exception if the Drush --create_dc_from_mods is present and MODS is the key datastream. If
+      // this option is not present, a default DC datastream is generated from the object label and PID.
+      if ($this->preprocessorParameters['create_dc_from_mods']) {
+        $dc_content = islandora_batch_with_derivs_get_dc_from_mods($mods_content, $this->modsToDcTransform);
+        $dc = $this->constructDatastream('DC', 'X');
+        $dc->mimetype = 'text/xml';
+        $dc->label = 'Dublin Core Record for this object';
+        $dc->setContentFromString($dc_content);
+        $this->ingestDatastream($dc);
+      }
     }
     if ($this->preprocessorParameters['key_datastream'] == 'DC') {
       $dc_content = file_get_contents($this->keyDsFilePath);
