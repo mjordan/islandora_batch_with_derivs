@@ -45,8 +45,8 @@ function islandora_batch_with_derivs_drush_command() {
         'value' => 'optional',
       ),
       'create_dc_from_mods' => array(
-        'description' => "If present, the DC datastream will be generated from the MODS.xml key datastream. If absent, the DC datastream will be generated from the object's label and PID.",
-        'value' => 'optional',
+        'description' => "If true, the DC datastream will be generated from the MODS.xml key datastream. If false, the DC datastream will be generated from the object's label and PID.",
+        'value' => 'required',
       ),
     ),
     'bootstrap' => DRUSH_BOOTSTRAP_DRUPAL_LOGIN,
@@ -73,7 +73,7 @@ function drush_islandora_batch_with_derivs_preprocess() {
     'parent' => drush_get_option('parent'),
     'parent_relationship_uri' => drush_get_option('parent_relationship_uri', 'info:fedora/fedora-system:def/relations-external#'),
     'parent_relationship_pred' => drush_get_option('parent_relationship_pred', 'isMemberOf'),
-    'create_dc_from_mods' => drush_get_option('create_dc_from_mods', FALSE),
+    'create_dc_from_mods' => drush_get_option('create_dc_from_mods', TRUE),
   );
 
   // Run the preprocessor.

@@ -43,10 +43,13 @@ class IslandoraBatchWithDerivsObject extends IslandoraBatchObject {
       $mods_content = file_get_contents($this->keyDsFilePath);
       $this->label = islandora_batch_with_derivs_get_label_from_mods($mods_content);
 
-      // Most datastreams in the new object correspond 1:1 to the files in the input directory; DC is
-      // an exception if the Drush --create_dc_from_mods is present and MODS is the key datastream. If
-      // this option is not present, a default DC datastream is generated from the object label and PID.
-      if ($this->preprocessorParameters['create_dc_from_mods']) {
+      // Datastreams in the new object correspond 1:1 to the files in the input directory. DC is an
+      // exception: if the Drush --create_dc_from_mods is true (default) and MODS is the key datastream,
+      // a DC datastream will be generated from the MODS.xml file. If this option is false, a default DC
+      // datastream is generated from the object label and PID. If false and both a MODS.xml and DC.xml
+      // datastream file exist, both files will populate their respective datastreams (in other words,
+      // DC is not generated from MODS).
+      if ($this->preprocessorParameters['create_dc_from_mods'] === TRUE && !$datastreams['DC']) {
         $dc_content = islandora_batch_with_derivs_get_dc_from_mods($mods_content, $this->modsToDcTransform);
         $dc = $this->constructDatastream('DC', 'X');
         $dc->mimetype = 'text/xml';
