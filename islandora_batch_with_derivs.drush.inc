@@ -48,9 +48,26 @@ function islandora_batch_with_derivs_drush_command() {
         'description' => "If true, the DC datastream will be generated from the MODS.xml key datastream. If false, the DC datastream will be generated from the object's label and PID.",
         'value' => 'required',
       ),
+      'use_pids' => array(
+        'description' => "If true, PIDs derived from the object directory names will be assigned. The colon (:) in the PID should be represented by a plus sign (+) in the directory name, and the '--namespace' option will be ignored. If false (the default), objects will be assigned new PIDs. ",
+        'value' => 'required',
+      ),
     ),
     'bootstrap' => DRUSH_BOOTSTRAP_DRUPAL_LOGIN,
   );
+
+  $items['islandora_batch_with_derivs_check_pids'] = array(
+    'aliases' => array('ibwdcp'),
+    'description' => "Scans the input directory and reports whether PIDs of new objects already exist. Useful in preparation for using islandora_batch_with_derivs_preprocess's --use_pids option.",
+    'options' => array(
+      'scan_target' => array(
+        'description' => 'The target directory to scan.',
+        'required' => TRUE,
+      ),
+    ),
+    'bootstrap' => DRUSH_BOOTSTRAP_DRUPAL_LOGIN,
+  );
+
 
   return $items;
 }
@@ -74,12 +91,32 @@ function drush_islandora_batch_with_derivs_preprocess() {
     'parent_relationship_uri' => drush_get_option('parent_relationship_uri', 'info:fedora/fedora-system:def/relations-external#'),
     'parent_relationship_pred' => drush_get_option('parent_relationship_pred', 'isMemberOf'),
     'create_dc_from_mods' => drush_get_option('create_dc_from_mods', TRUE),
+    'use_pids' => drush_get_option('use_pids', FALSE),
   );
 
   // Run the preprocessor.
   $preprocessor = new IslandoraBatchWithDerivsPreprocessor($connection, $parameters);
   $preprocessed = islandora_batch_handle_preprocessor($preprocessor);
   drush_log(t("SetId: @s", array('@s' => $preprocessor->getSetId())), "ok");
+}
+
+/**
+ * Implements hook_drush_command().
+ */
+function drush_islandora_batch_with_derivs_check_pids() {
+  $input_directory = drush_get_option('scan_target');
+  $object_dirs = array_diff(scandir($input_directory), array('..', '.'));
+  foreach ($object_dirs as $object_dir) {
+    if (preg_match('/\+/', $object_dir)) {
+      $pid = preg_replace('/\+/', ':', $object_dir);
+      // Check whether an object with PID exists, and if so,
+      // report that the object will be skipping on ingest.
+      if (islandora_object_load($pid)) {
+        drush_log(dt("An object with !pid already exists; object in !object_dir will not be ingested.",
+          array('!pid' => $pid, '!object_dir' => $input_directory . DIRECTORY_SEPARATOR . $object_dir)), 'warning');
+      }
+    }
+  }
 }
 
 /**

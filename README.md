@@ -4,6 +4,7 @@ Islandora batch module for ingesting objects that have pregenerated derivatives 
 
 1. you have created derivatives outside of Islandora to reduce the amount of time it takes to ingest a large batch
 2. you are migrating content into Islandora and can export the content you are migrating from the source platform with datastreams pregenerated.
+3. you are migrating content from one Islandora instance to another. This is a special case covered in more detail in the "Moving content between Islandora instances", below.
 
 We need to use a specialized batch ingest module for this because the standard Islandora Batch only allows for two files per object, one .xml file for the MODS or DC and one other file for the OBJ. Islandora Batch with Derivatives allows you to group all of the files corresonding to an object's datastreams (with the exception of RELS-EXT) into a subdirectory, as illustrated below.
 
@@ -70,7 +71,48 @@ Each object in the batch must be in its own subdirectory under the path specifie
     └── TN.jpg
 ```
 
-The names of the object subdirectories have no significance.
+The names of the object subdirectories have no significance (unless the `--use_pids=true` option is included, as described below).
+
+## Moving content between Islandora instances
+
+It is possible to use this module to ingest content that originated in another Islandora instance. You can choose to allow the target Islandora to generate new PIDs for the ingested objects, or you can choose to assign specific PIDs to the new objects. A common instance of the latter case is to assign the PIDs assigned by another Islandora instance. 
+
+### Assigning new PIDS
+
+The default behavior of this module is to allow the target Islandora to assign PIDs to ingested objects. The most important implication of this is that Islandora will generate a new RELS-EXT datastream for each object, containing only the RDF statements that are generated on ingest (collecion membership and content model). If a RELS-EXT datastream file is present, it will be ignored. The namespace of the new PIDs will be the one specified in the `islandora_batch_with_derivs_preprocess` command's `--namespace` option.
+
+### Preserving existing PIDS
+
+PIDs can be assinged to the objects being ingested through use of the `islandora_batch_with_derivs_preprocess` command's `--use_pids` option. If this option has a value of 'true' (e.g., `--use_pids=true`), the name of each object-level directory containing the datastream files will be converted to a PID and that PID will be assigned to the resulting object. Each directory must contain a plus ssign (`+`) that will be converted into the colon in the PID. For example, with the `--use_pids=true`, the following directory structure will result in objects with PIDs 'foo:23', 'bar:2', and 'baz:special_object':
+
+```
+/tmp/valueofscantarget
+├── foo+23 
+│   ├── DC.xml
+│   ├── MEDIUM_SIZE.jpg
+│   ├── MODS.xml
+│   ├── OBJ.jpg
+│   ├── TECHMD.xml
+│   └── TN.jpg
+├── bar+2
+│   ├── DC.xml
+│   ├── MEDIUM_SIZE.jpg
+│   ├── MODS.xml
+│   ├── OBJ.jpg
+│   ├── TECHMD.xml
+│   └── TN.jpg
+└── baz+special_object
+    ├── DC.xml
+    ├── MEDIUM_SIZE.jpg
+    ├── MODS.xml
+    ├── OBJ.jpg
+    ├── TECHMD.xml
+    └── TN.jpg
+```
+
+If a RELS-EXT datastream file exists for an object, it will be ingested, and all new relationships resulting from the ingest (e.g., additional collection membership) will be added to the object's RELS-EXT datastream. If no RELS-EXT datastream file exists, Islandora will generate one.
+
+One strategy for migrating objects, with their relationships intact, is to export objects using the [Islandora Dump Datastreams](https://github.com/mjordan/islandora_dump_datastreams) module and then ingest the resulting packages as described in this section.
 
 ## Maintainer
 
