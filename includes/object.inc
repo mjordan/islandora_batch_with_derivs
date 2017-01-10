@@ -42,7 +42,6 @@ class IslandoraBatchWithDerivsObject extends IslandoraBatchObject {
     if ($this->preprocessorParameters['key_datastream'] == 'MODS') {
       $mods_content = file_get_contents($this->keyDsFilePath);
       $this->label = islandora_batch_with_derivs_get_label_from_mods($mods_content);
-
       // Datastreams in the new object correspond 1:1 to the files in the input directory. DC is an
       // exception: if the Drush --create_dc_from_mods is true (default) and MODS is the key datastream,
       // a DC datastream will be generated from the MODS.xml file. If this option is false, a default DC
@@ -73,9 +72,16 @@ class IslandoraBatchWithDerivsObject extends IslandoraBatchObject {
    * Add relationships.
    */
   public function addRelationships() {
-    $this->relationships->add(FEDORA_RELS_EXT_URI, 'isMemberOfCollection', $this->preprocessorParameters['parent']);
-    // Get content model from OBJ file extension.
     module_load_include('inc', 'islandora_batch_with_derivs', 'includes/utilities');
+    $this->relationships->add(FEDORA_RELS_EXT_URI, 'isMemberOfCollection', $this->preprocessorParameters['parent']);
+    $rels = $this->getRelationships($this->objectContentPath);
+    foreach ($rels as $rel) {
+      // We don't want to add duplicate isMemberOfCollection relationships.
+      if ($rel['predicate'] != 'isMemberOfCollection' && $rel['object'] != $this->preprocessorParameters['parent']) {
+        $this->relationships->add($rel['namespace_uri'], $rel['predicate'], $rel['object']);
+      }
+    }
+    // Get content model from OBJ file extension.
     $obj_path_pattern = $this->objectContentPath . DIRECTORY_SEPARATOR . 'OBJ';
     $obj_files = glob($obj_path_pattern . '*');
     // There should be only one OBJ file, or none (since the OBJ datastream
@@ -111,12 +117,11 @@ class IslandoraBatchWithDerivsObject extends IslandoraBatchObject {
    */
   private function getDatastreams() {
     $datastreams = array();
-
     $ds_filepaths = glob($this->objectContentPath . DIRECTORY_SEPARATOR . '*');
     foreach ($ds_filepaths as $ds_filepath) {
       $dsid = pathinfo($ds_filepath, PATHINFO_FILENAME);
       $dsid = strtoupper($dsid);
-      if (strlen($dsid)) {
+      if (strlen($dsid) && $dsid != 'RELS-EXT') {
         $ds = $this->constructDatastream($dsid, 'M');
         $mime_detector = new MimeDetect();
         $ds->mimetype = $mime_detector->getMimetype($ds_filepath);
@@ -126,6 +131,50 @@ class IslandoraBatchWithDerivsObject extends IslandoraBatchObject {
       }
     }
     return $datastreams;
+  }
+
+  /**
+   * Parses relationships out of a RELS-EXT datastream file.
+   *
+   * We can't ingest the RELS-EXT file directly because we may get duplicate
+   * relationships, e.g. the source object's RELS-EXT and the relationships
+   * defined on ingest may contain the same relationships.
+   *
+   * @param $string $path
+   *   The path to the object directory.
+   *
+   * @return array
+   *   An associative array of relationships parsed out from the RELS-EXT file. 
+   */
+  private function getRelationships($path) {
+    $rels = array();
+    if (!$this->preprocessorParameters['use_pids']) {
+      return $rels;
+    }
+    // Get content model from OBJ file extension.
+    $rels_ext_path_pattern = $path . DIRECTORY_SEPARATOR . 'RELS-EXT';
+    $rels_ext_files = glob($rels_ext_path_pattern . '*');
+    // There should be only RELS-EXT file, or none.
+    if (count($rels_ext_files)) {
+      $doc = new DOMDocument();
+      $doc->load($rels_ext_files[0]);
+      $desc = $doc->getElementsByTagName('Description')->item(0);
+      foreach ($desc->childNodes as $node) {
+        if (property_exists($node, 'tagName')) {
+          list($prefix, $tag) = explode(':', $node->tagName);
+          $rel = array();
+          $rel['predicate'] = $tag; 
+          $object_value = preg_replace('@info:fedora/@', '', $node->getAttribute('rdf:resource'));
+          $rel['object'] = $object_value; 
+          $rel['namespace_uri'] = $node->lookupnamespaceURI($prefix);
+          $rels[] = $rel;
+        }
+      }
+      return $rels;
+    }
+    else {
+      return $rels;
+    }
   }
 
 }

@@ -38,6 +38,12 @@ class IslandoraBatchWithDerivsPreprocessor extends IslandoraBatchPreprocessor {
             // Check whether an object with PID exists, and if so,
             // report that we are skipping ingest on this object.
             if (islandora_object_load($pid)) {
+              // @todo: This check covers the case where an object that has the
+              // incoming PID already exists, but we also need to check the
+              // {islandora_batch_queue} table. If a previous batch ingest
+              // failed and the incoming PID existed in that failed batch,
+              // a subsequent batch ingest containing the PID will fail because
+              // of integrity errors on this table.
               watchdog('islandora_batch_with_derivs', 'An object with the !pid already exists, skipping ingest.',
                 array('!pid' => $pid), WATCHDOG_WARNING);
             }
