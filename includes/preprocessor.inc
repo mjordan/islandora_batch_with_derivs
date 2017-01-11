@@ -11,20 +11,20 @@
 class IslandoraBatchWithDerivsPreprocessor extends IslandoraBatchPreprocessor {
 
   /**
-   * Function to get....
+   * Generates objects from input files and adds them to the batch queue.
    */
   public function preprocess() {
     $input_directory = $this->parameters['scan_target'];
     $object_dirs = array_diff(scandir($input_directory), array('..', '.'));
 
-    // Accumulate a list of the objects added to the queue.
+    // Accumulate a list of the objects to be added to the queue.
     $added = array();
 
     // Check each subdirectory for the existence of the key datastream file
     // and if found, add the object to the batch.
     foreach ($object_dirs as $object_dir) {
       $object_dir_path = $input_directory . DIRECTORY_SEPARATOR . $object_dir;
-      // A metadata file for the object is required.
+      // A metadata file for the object is required (either MODS or DC).
       $key_datastream_path = $object_dir_path . DIRECTORY_SEPARATOR . $this->parameters['key_datastream'] . '.xml';
       if (file_exists($key_datastream_path)) {
         $batch_object = new IslandoraBatchWithDerivsObject($this->connection, $key_datastream_path, $this->parameters);
@@ -48,23 +48,23 @@ class IslandoraBatchWithDerivsPreprocessor extends IslandoraBatchPreprocessor {
                 array('!pid' => $pid), WATCHDOG_WARNING);
             }
             else {
+              // Add the instance to the Islandora batch queue using the
+              // existing PID.
               $batch_object->id = $pid;
-              // Add the instance to the Islandora batch queue
-              // using the existing PID.
               $this->addToDatabase($batch_object);
               $added[] = $batch_object;
             }
           }
           else {
-            // If we can't get a PID from the object directory name,
-            // report that we are skipping inigest on this object.
+            // If we can't get a PID from the object directory name, report
+            // that we are skipping inigest on this object.
             watchdog('islandora_batch_with_derivs', 'PID not available from object directory name !object_dir, skipping ingest.',
               array('!object_dir' => $object_dir), WATCHDOG_WARNING);
           }
         }
         else {
-          // Add the instance to the Islandora batch queue.
-          // Islandora will assign a PID.
+          // Add the instance to the Islandora batch queue. Islandora will
+          // assign a PID.
           $this->addToDatabase($batch_object);
           $added[] = $batch_object;
         }

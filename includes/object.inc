@@ -26,7 +26,7 @@ class IslandoraBatchWithDerivsObject extends IslandoraBatchObject {
   }
 
   /**
-   * Assemble the base datastreams.
+   * Assemble the datastreams and relationships.
    */
   public function batchProcess() {
     $datastreams = $this->getDatastreams();
@@ -162,11 +162,11 @@ class IslandoraBatchWithDerivsObject extends IslandoraBatchObject {
     if (!$this->preprocessorParameters['use_pids']) {
       return $rels;
     }
-    // Get content model from OBJ file extension.
+    // Get path to the RELS-EXT datastream file.
     $rels_ext_path_pattern = $path . DIRECTORY_SEPARATOR . 'RELS-EXT';
     $rels_ext_files = glob($rels_ext_path_pattern . '*');
     // There should be only RELS-EXT file, or none.
-    if (count($rels_ext_files)) {
+    if (count($rels_ext_files) === 1) {
       $doc = new DOMDocument();
       $doc->load($rels_ext_files[0]);
       $desc = $doc->getElementsByTagName('Description')->item(0);
@@ -182,11 +182,8 @@ class IslandoraBatchWithDerivsObject extends IslandoraBatchObject {
           $rels[] = $rel;
         }
       }
-      return $rels;
     }
-    else {
-      return $rels;
-    }
+    return $rels;
   }
 
 }
