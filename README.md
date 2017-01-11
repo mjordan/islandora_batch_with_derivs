@@ -71,19 +71,19 @@ Each object in the batch must be in its own subdirectory under the path specifie
     └── TN.jpg
 ```
 
-The names of the object subdirectories have no significance (unless the `--use_pids=true` option is included, as described below).
+The names of the object subdirectories have no significance (unless the `--use_pids=true` option is present, as described below).
 
 ## Moving content between Islandora instances
 
-It is possible to use this module to ingest content that originated in another Islandora instance. You can choose to allow the target Islandora to generate new PIDs for the ingested objects, or you can choose to assign specific PIDs to the new objects. A common instance of the latter case is to assign the PIDs assigned by another Islandora instance. 
+It is possible to use this module to ingest content that originated in another Islandora instance. You can choose to allow the target Islandora to generate new PIDs for the ingested objects, or you can choose to assign specific PIDs to the new objects. A common use case for the latter is that you want the target Islandora instance to use the PIDs assigned to the objects in the source Islandora instance in order to preserve relationships between objects, and to make object URLs in the target Islandora map directly to their equivalents in the source Islandora.
 
-### Assigning new PIDS
+### Assigning new PIDs
 
 The default behavior of this module is to allow the target Islandora to assign PIDs to ingested objects. The most important implication of this is that Islandora will generate a new RELS-EXT datastream for each object, containing only the RDF statements that are generated on ingest (collecion membership and content model). If a RELS-EXT datastream file is present, it will be ignored. The namespace of the new PIDs will be the one specified in the `islandora_batch_with_derivs_preprocess` command's `--namespace` option.
 
-### Preserving existing PIDS
+### Preserving existing PIDS (and relationships)
 
-PIDs can be assigned to the objects being ingested through use of the `islandora_batch_with_derivs_preprocess` command's `--use_pids` option. If this option has a value of 'true' (e.g., `--use_pids=true`), the name of each object-level directory containing the datastream files will be converted to a PID and that PID will be assigned to the resulting object. The colon in the PID must be represented by a plus ssign (`+`); this will be converted into the colon in the preserved PID. For example, with the `--use_pids=true`, the following directory structure will result in objects with PIDs 'foo:23', 'bar:2', and 'baz:special_object':
+PIDs can be assigned to the objects being ingested through use of the `islandora_batch_with_derivs_preprocess` command's `--use_pids` option. If this option has a value of 'true' (e.g., `--use_pids=true`), the name of each object-level directory containing the datastream files will be converted to a PID and that PID will be assigned to the resulting object. The colon in the PID must be represented in the directory name by a plus sign (`+`); the plus sign will be converted into the colon in the preserved PID. For example, with the `--use_pids=true`, the following directory structure will result in objects with PIDs 'foo:23', 'bar:198392', and 'baz:special_object':
 
 ```
 /tmp/valueofscantarget
@@ -95,7 +95,7 @@ PIDs can be assigned to the objects being ingested through use of the `islandora
 │   ├── RELS-EXT.rdf
 │   ├── TECHMD.xml
 │   └── TN.jpg
-├── bar+2
+├── bar+198392
 │   ├── DC.xml
 │   ├── MEDIUM_SIZE.jpg
 │   ├── MODS.xml
@@ -108,14 +108,18 @@ PIDs can be assigned to the objects being ingested through use of the `islandora
     ├── MEDIUM_SIZE.jpg
     ├── MODS.xml
     ├── OBJ.jpg
-│   ├── RELS-EXT.rdf
+    ├── RELS-EXT.rdf
     ├── TECHMD.xml
     └── TN.jpg
 ```
 
-If a RELS-EXT datastream file exists in an object directory, the relationships expressed in it will be parsed out, and all new relationships resulting from the ingest (e.g., additional collection membership) will be added to the object's RELS-EXT datastream with the exception of duplicate 'isMemberOfCollection' relationships. If no RELS-EXT datastream file exists, Islandora will generate one.
+Note that:
 
-One strategy for migrating objects, with their relationships intact, is to export objects using the [Islandora Dump Datastreams](https://github.com/mjordan/islandora_dump_datastreams) module and then ingest the resulting packages as described in this section.
+* If a RELS-EXT datastream file exists in an object directory and the `--use_pids=true` is present, the relationships expressed in it will be parsed out and added to the new object. All new relationships resulting from the ingest (e.g., additional collection membership) will also be added to the object's RELS-EXT datastream with the exception of duplicate 'isMemberOfCollection' relationships.
+* If a RELS-EXT datastream file exists, the content model defined in that datastream is assigned to the ingested object, even if the `--content_models` option is present.
+* If no RELS-EXT datastream file exists, Islandora will generate one in the same way that it would if the `--use_pids=true` option were absent or `false`.
+
+A useful strategy for migrating objects, with their relationships intact, is to export objects using the [Islandora Dump Datastreams](https://github.com/mjordan/islandora_dump_datastreams) module and then ingest the resulting packages as described in this section.
 
 ## Maintainer
 

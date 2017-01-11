@@ -17,7 +17,6 @@ class IslandoraBatchWithDerivsObject extends IslandoraBatchObject {
    */
   public function __construct(IslandoraTuque $connection, $key_datastream_path, $batch_parameters) {
     parent::__construct(NULL, $connection->repository);
-
     $this->keyDsFilePath = $key_datastream_path;
     $this->objectContentPath = dirname($key_datastream_path);
     $this->preprocessorParameters = $batch_parameters;
@@ -30,7 +29,6 @@ class IslandoraBatchWithDerivsObject extends IslandoraBatchObject {
    * Assemble the base datastreams.
    */
   public function batchProcess() {
-    // Get datastreams.
     $datastreams = $this->getDatastreams();
     if (count($datastreams)) {
       foreach ($datastreams as $datastream) {
@@ -75,27 +73,40 @@ class IslandoraBatchWithDerivsObject extends IslandoraBatchObject {
     module_load_include('inc', 'islandora_batch_with_derivs', 'includes/utilities');
     $this->relationships->add(FEDORA_RELS_EXT_URI, 'isMemberOfCollection', $this->preprocessorParameters['parent']);
     $rels = $this->getRelationships($this->objectContentPath);
-    foreach ($rels as $rel) {
+    $add_models = TRUE;
+    foreach ($rels as &$rel) {
+      // If any fedora-model:hasModel relationships exist, do not assign
+      // $this->models relationships below.
+      if ($rel['namespace_prefix'] == 'fedora-model' && $rel['predicate'] == 'hasModel') {
+        $rel['object'] = 'info:fedora/' . $rel['object'];
+        $add_models = FALSE;
+      }
+
       // We don't want to add duplicate isMemberOfCollection relationships.
       if ($rel['predicate'] != 'isMemberOfCollection' && $rel['object'] != $this->preprocessorParameters['parent']) {
         $this->relationships->add($rel['namespace_uri'], $rel['predicate'], $rel['object']);
       }
     }
+
     // Get content model from OBJ file extension.
     $obj_path_pattern = $this->objectContentPath . DIRECTORY_SEPARATOR . 'OBJ';
     $obj_files = glob($obj_path_pattern . '*');
     // There should be only one OBJ file, or none (since the OBJ datastream
     // is optional).
-    if (count($obj_files)) {
+    if (count($obj_files) <= 1) {
       $ext = pathinfo($obj_files[0], PATHINFO_EXTENSION);
-      $this->models = islandora_batch_with_derivs_get_cmodel($ext);
+      if ($add_models) {
+        $this->models = islandora_batch_with_derivs_get_cmodel($ext);
+      }
     }
     else {
       // If there is no OBJ to get the content model from, use the value
       // of the --content_models option. @todo: account for when this
       // option is missing.
       $content_model = $this->preprocessorParameters['content_models'];
-      $this->models = islandora_batch_with_derivs_get_cmodel($content_model);
+      if ($add_models) {
+        $this->models = islandora_batch_with_derivs_get_cmodel($content_model);
+      }
     }
   }
 
@@ -166,6 +177,7 @@ class IslandoraBatchWithDerivsObject extends IslandoraBatchObject {
           $rel['predicate'] = $tag; 
           $object_value = preg_replace('@info:fedora/@', '', $node->getAttribute('rdf:resource'));
           $rel['object'] = $object_value; 
+          $rel['namespace_prefix'] = $prefix;
           $rel['namespace_uri'] = $node->lookupnamespaceURI($prefix);
           $rels[] = $rel;
         }
