@@ -71,21 +71,32 @@ class IslandoraBatchWithDerivsObject extends IslandoraBatchObject {
    */
   public function addRelationships() {
     module_load_include('inc', 'islandora_batch_with_derivs', 'includes/utilities');
-    $this->relationships->add(FEDORA_RELS_EXT_URI, 'isMemberOfCollection', $this->preprocessorParameters['parent']);
+    module_load_include('inc', 'islandora_paged_content', 'includes/utilities');
     $rels = $this->getRelationships($this->objectContentPath);
     $add_models = TRUE;
     foreach ($rels as &$rel) {
       // If any fedora-model:hasModel relationships exist, do not assign
       // $this->models relationships below.
       if ($rel['namespace_prefix'] == 'fedora-model' && $rel['predicate'] == 'hasModel') {
-        $rel['object'] = 'info:fedora/' . $rel['object'];
+        // $rel['object'] = 'info:fedora/' . $rel['object'];
         $add_models = FALSE;
+      }
+
+      if(in_array($rel['predicate'], ['isSequenceNumber', 'isPageNumber', 'isSection', 'hasLanguage'])) {
+        islandora_paged_content_set_relationship($this->relationships, ISLANDORA_RELS_EXT_URI, $rel['predicate'], (string) $rel['value'], TRUE);
+        continue;
       }
 
       // We don't want to add duplicate isMemberOfCollection relationships.
       if ($rel['predicate'] != 'isMemberOfCollection' && $rel['object'] != $this->preprocessorParameters['parent']) {
         $this->relationships->add($rel['namespace_uri'], $rel['predicate'], $rel['object']);
       }
+    }
+
+    if($rels[0]['object'] === 'islandora:pageCModel') {
+      islandora_paged_content_set_relationship($this->relationships, ISLANDORA_RELS_EXT_URI, 'isSection', '1', TRUE);
+    } else {
+      $this->relationships->add(FEDORA_RELS_EXT_URI, 'isMemberOfCollection', $this->preprocessorParameters['parent']);
     }
 
     // Get content model from OBJ file extension.
