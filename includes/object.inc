@@ -88,24 +88,32 @@ class IslandoraBatchWithDerivsObject extends IslandoraBatchObject {
       }
     }
 
-    // Get content model from OBJ file extension.
+    // Get content model from OBJ file extension. Or, if the content model is
+    // provided as a Drush option, use it instead.
     $obj_path_pattern = $this->objectContentPath . DIRECTORY_SEPARATOR . 'OBJ';
     $obj_files = glob($obj_path_pattern . '*');
     // There should be only one OBJ file, or none (since the OBJ datastream
     // is optional).
     if (count($obj_files) <= 1) {
-      $ext = pathinfo($obj_files[0], PATHINFO_EXTENSION);
       if ($add_models) {
-        $this->models = islandora_batch_with_derivs_get_cmodel($ext);
+        // A content model was not provided as a Drush option. Use the OBJ
+        // file's extension.
+        if (is_null($this->preprocessorParameters['content_models'])) {
+          $ext = pathinfo($obj_files[0], PATHINFO_EXTENSION);
+          $this->models = islandora_batch_with_derivs_get_cmodel($ext);
+        }
+        // A content model was provided as a Drush option. Use it instead.
+        else {
+          $this->models = $this->preprocessorParameters['content_models'];
+        }
       }
     }
     else {
       // If there is no OBJ to get the content model from, use the value
       // of the --content_models option. @todo: account for when this
       // option is missing.
-      $content_model = $this->preprocessorParameters['content_models'];
       if ($add_models) {
-        $this->models = islandora_batch_with_derivs_get_cmodel($content_model);
+        $this->models = $this->preprocessorParameters['content_models'];
       }
     }
   }

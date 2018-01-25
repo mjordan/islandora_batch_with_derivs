@@ -41,7 +41,7 @@ function islandora_batch_with_derivs_drush_command() {
         'value' => 'optional',
       ),
       'content_models' => array(
-        'description' => 'The content model to use for objects that do not have an OBJ derivative file.',
+        'description' => 'The content model to use for objects that do not have an OBJ derivative file. If there is an OBJ file, the provided content model overrides the automatically assigned one.',
         'value' => 'optional',
       ),
       'create_dc_from_mods' => array(
