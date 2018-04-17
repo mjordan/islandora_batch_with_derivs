@@ -44,8 +44,8 @@ function islandora_batch_with_derivs_drush_command() {
         'description' => 'The content model to use for objects that do not have an OBJ derivative file. If there is an OBJ file, the provided content model overrides the automatically assigned one.',
         'value' => 'optional',
       ),
-      'create_dc_from_mods' => array(
-        'description' => "If true, the DC datastream will be generated from the MODS.xml key datastream. If false, the DC datastream will be generated from the object's label and PID.",
+      'create_dc' => array(
+        'description' => "If true, the DC datastream will be generated from the MODS.xml or MAds.xml key datastream. If false, the DC datastream will be generated from the object's label and PID.",
         'value' => 'required',
       ),
       'use_pids' => array(
@@ -90,9 +90,15 @@ function drush_islandora_batch_with_derivs_preprocess() {
     'parent' => drush_get_option('parent'),
     'parent_relationship_uri' => drush_get_option('parent_relationship_uri', 'info:fedora/fedora-system:def/relations-external#'),
     'parent_relationship_pred' => drush_get_option('parent_relationship_pred', 'isMemberOf'),
-    'create_dc_from_mods' => drush_get_option('create_dc_from_mods', TRUE),
+    'create_dc' => drush_get_option('create_dc', TRUE),
     'use_pids' => drush_get_option('use_pids', FALSE),
   );
+
+  if ($parameters['key_datastream'] == 'MADS') {
+    if (!module_exists('islandora_entities')) {
+      return drush_set_error('Using MADS as the key datastream requires the Islandora Entities Solution Pack');
+    }
+  }
 
   // Run the preprocessor.
   $preprocessor = new IslandoraBatchWithDerivsPreprocessor($connection, $parameters);

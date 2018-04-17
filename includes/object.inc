@@ -20,8 +20,11 @@ class IslandoraBatchWithDerivsObject extends IslandoraBatchObject {
     $this->keyDsFilePath = $key_datastream_path;
     $this->objectContentPath = dirname($key_datastream_path);
     $this->preprocessorParameters = $batch_parameters;
-    if ($this->preprocessorParameters['create_dc_from_mods']) {
-      $this->modsToDcTransform = drupal_get_path('module', 'islandora_batch') . '/transforms/mods_to_dc.xsl';
+    if ($this->preprocessorParameters['create_dc'] && $this->preprocessorParameters['key_datastream'] == 'MODS') {
+      $this->keyToDcTransform = drupal_get_path('module', 'islandora_batch') . '/transforms/mods_to_dc.xsl';
+    }
+    if ($this->preprocessorParameters['create_dc'] && $this->preprocessorParameters['key_datastream'] == 'MADS') {
+      $this->keyToDcTransform = drupal_get_path('module', 'islandora_entities') . '/xml/mads_to_dc.xsl';
     }
   }
 
@@ -39,15 +42,27 @@ class IslandoraBatchWithDerivsObject extends IslandoraBatchObject {
     module_load_include('inc', 'islandora_batch_with_derivs', 'includes/utilities');
     if ($this->preprocessorParameters['key_datastream'] == 'MODS') {
       $mods_content = file_get_contents($this->keyDsFilePath);
-      $this->label = islandora_batch_with_derivs_get_label_from_mods($mods_content);
+      $this->label = islandora_batch_with_derivs_get_label($mods_content, 'mods', 'http://www.loc.gov/mods/v3', '//mods:titleInfo/mods:title');
       // Datastreams in the new object correspond 1:1 to the files in the input directory. DC is an
-      // exception: if the Drush --create_dc_from_mods is true (default) and MODS is the key datastream,
+      // exception: if the Drush --create_dc is true (default) and MODS is the key datastream,
       // a DC datastream will be generated from the MODS.xml file. If this option is false, a default DC
       // datastream is generated from the object label and PID. If false and both a MODS.xml and DC.xml
       // datastream file exist, both files will populate their respective datastreams (in other words,
       // DC is not generated from MODS).
-      if ($this->preprocessorParameters['create_dc_from_mods'] === TRUE && !$datastreams['DC']) {
-        $dc_content = islandora_batch_with_derivs_get_dc_from_mods($mods_content, $this->modsToDcTransform);
+      if ($this->preprocessorParameters['create_dc'] === TRUE && !$datastreams['DC']) {
+        $dc_content = islandora_batch_with_derivs_get_dc_from_xml($mods_content, $this->keyToDcTransform);
+        $dc = $this->constructDatastream('DC', 'X');
+        $dc->mimetype = 'text/xml';
+        $dc->label = 'Dublin Core Record for this object';
+        $dc->setContentFromString($dc_content);
+        $this->ingestDatastream($dc);
+      }
+    }
+    if ($this->preprocessorParameters['key_datastream'] == 'MADS') {
+      $mads_content = file_get_contents($this->keyDsFilePath);
+      $this->label = islandora_batch_with_derivs_get_label($mads_content, 'mads', 'http://www.loc.gov/mads/v2', '//mads:authority/mads:titleInfo/mads:title');
+      if ($this->preprocessorParameters['create_dc'] === TRUE && !$datastreams['DC']) {
+        $dc_content = islandora_batch_with_derivs_get_dc_from_xml($mads_content, $this->keyToDcTransform);
         $dc = $this->constructDatastream('DC', 'X');
         $dc->mimetype = 'text/xml';
         $dc->label = 'Dublin Core Record for this object';
@@ -57,7 +72,7 @@ class IslandoraBatchWithDerivsObject extends IslandoraBatchObject {
     }
     if ($this->preprocessorParameters['key_datastream'] == 'DC') {
       $dc_content = file_get_contents($this->keyDsFilePath);
-      $this->label = islandora_batch_with_derivs_get_label_from_dc($dc_content);
+      $this->label = islandora_batch_with_derivs_get_label($dc_content, 'dc', 'http://purl.org/dc/elements/1.1/', '//dc:title');
     }
 
     $this->addRelationships();

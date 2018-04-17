@@ -45,22 +45,22 @@ function islandora_batch_with_derivs_get_cmodel($extension) {
 }
 
 /**
- * Gets the title element to use as the object label.
+ * Gets the object label from the key datastream.
  *
- * @param string $mods_xml
- *   The contents of the MODS.xml file.
+ * @param string $xml
+ *   The contents of the MODS.xml, MADS.xml, or DC.xml file.
  *
  * @return string
  *   A label for the object.
  */
-function islandora_batch_with_derivs_get_label_from_mods($mods_xml) {
+function islandora_batch_with_derivs_get_label($xml, $ns, $ns_uri, $xpath_query) {
   $dom = new DOMDocument();
-  $dom->loadXML($mods_xml);
+  $dom->loadXML($xml);
   $xpath = new DOMXPath($dom);
-  $xpath->registerNamespace('mods', 'http://www.loc.gov/mods/v3');
-  $titles = $xpath->query('//mods:titleInfo/mods:title');
-  if ($titles->length > 0) {
-    $label = $titles->item(0)->nodeValue;
+  $xpath->registerNamespace($ns, $ns_uri);
+  $labels = $xpath->query($xpath_query);
+  if ($labels->length > 0) {
+    $label = $labels->item(0)->nodeValue;
   }
   else {
     $label = '[No object label available]';
@@ -69,33 +69,9 @@ function islandora_batch_with_derivs_get_label_from_mods($mods_xml) {
 }
 
 /**
- * Gets the title element to use as the object label.
+ * Generates DC XML from XML via XSLT (e.g., MODS or MADS).
  *
- * @param string $dc_xml
- *   The contents of the DC.xml file.
- *
- * @return string
- *   A label for the object.
- */
-function islandora_batch_with_derivs_get_label_from_dc($dc_xml) {
-  $dom = new DOMDocument();
-  $dom->loadXML($dc_xml);
-  $xpath = new DOMXPath($dom);
-  $xpath->registerNamespace('dc', 'http://purl.org/dc/elements/1.1/');
-  $titles = $xpath->query("//dc:title");
-  if ($titles->length > 0) {
-    $label = $titles->item(0)->nodeValue;
-  }
-  else {
-    $label = '[No object label available]';
-  }
-  return $label;
-}
-
-/**
- * Generates DC XML from MODS XML via XSLT.
- *
- * @param string $mods_xml
+ * @param string $xml
  *   An XML string.
  * @param string $path_to_xslt
  *   Path to the XSLT stylesheet.
@@ -103,11 +79,11 @@ function islandora_batch_with_derivs_get_label_from_dc($dc_xml) {
  * @return string
  *   The transformed DC XML.
  */
-function islandora_batch_with_derivs_get_dc_from_mods($mods_xml, $path_to_xslt) {
+function islandora_batch_with_derivs_get_dc_from_xml($xml, $path_to_xslt) {
   $xsl_doc = new DOMDocument();
   $xsl_doc->load($path_to_xslt);
   $xml_doc = new DOMDocument();
-  $xml_doc->loadXML($mods_xml);
+  $xml_doc->loadXML($xml);
   $xslt_proc = new XSLTProcessor();
   $xslt_proc->importStylesheet($xsl_doc);
   $dc_xml = $xslt_proc->transformToXML($xml_doc);
