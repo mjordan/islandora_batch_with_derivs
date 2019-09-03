@@ -76,6 +76,7 @@ class IslandoraBatchWithDerivsObject extends IslandoraBatchObject {
     }
 
     $this->addRelationships();
+    $this->inheritXacmlPolicies();
 
     // Indicate that this object is ready to be ingested.
     return ISLANDORA_BATCH_STATE__DONE;
@@ -129,6 +130,19 @@ class IslandoraBatchWithDerivsObject extends IslandoraBatchObject {
       // option is missing.
       if ($add_models) {
         $this->models = $this->preprocessorParameters['content_models'];
+      }
+    }
+  }
+
+  /**
+   * Add inheritXacmlFrom relationship.
+   */
+  protected function inheritXacmlPolicies() {
+    if (module_exists('islandora_xacml_editor')) {
+      $collection = $this->preprocessorParameters['parent'];
+      $parent = islandora_object_load($collection);
+      if ($parent) {
+        islandora_xacml_editor_apply_parent_policy($this, $parent);
       }
     }
   }

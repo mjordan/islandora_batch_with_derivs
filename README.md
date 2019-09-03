@@ -27,9 +27,12 @@ Then, to perform the ingest:
 
 ## Preparing Islandora for ingesting
 
-When using this batch module, you usually want to turn Islandora's derivative creation off. To do this, got to Admin > Islandora > Configuration, and check "Defer derivative generation during ingest". This will disable all derivative generation. You should probably return this setting to its original value after your batch finishes running.
+Islandora has a setting that turns derivative creation off. To do this, got to Admin > Islandora > Configuration, and check "Defer derivative generation during ingest". 
 
-If you do not turn derivative creation off, datastreams based on the files in the input directories will not be generated, but the remaining derivatives defined by the object's content model will be generated as usual.
+When using this batch module, you do not need to turn derivative creation off. If you do not turn this off, datastreams based on the files in the input directories will be created, and Islandora will only generate other datastreams, as defined by the object's content model, that do not have corresponding files in the input directories.
+
+If you do turn derivative creation off, only datastreams based on the files in your input directories will be created. Other derivatives will not be created. You should probably return this setting to its original value after your batch finishes running.
+
 
 ## Preparing your content files for ingesting
 
